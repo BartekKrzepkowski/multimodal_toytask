@@ -1,3 +1,7 @@
+import logging
+import os
+from datetime import datetime
+
 import torch
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
@@ -32,28 +36,59 @@ def show_and_save_grid(dataset, num_images=16, cols=4, save_path="dataset_grid.p
     
     
     
-def matplotlib_scatters_training(n_epochs, train_losses, test_losses, train_acc, test_acc):
+def matplotlib_scatters_training(config, epochs_metrics):
     # Tworzenie wykresu metryk: strata i dokładność
     plt.figure(figsize=(10, 4))
     
     # Wykres strat
     plt.subplot(1, 2, 1)
-    plt.plot(range(1, n_epochs + 1), train_losses, label="Strata treningowa")
-    plt.plot(range(1, n_epochs + 1), test_losses, label="Strata testowa")
-    plt.xlabel("Epoka")
-    plt.ylabel("Strata (Cross Entropy)")
+    for metric_name in epochs_metrics:
+        if 'loss' in metric_name:
+            plt.plot(
+                range(1, config.n_epochs + 1),
+                epochs_metrics[metric_name],
+                label=metric_name
+            )
+    plt.xlabel("Epoch")
+    plt.ylabel("Cross Entropy Loss")
+    plt.grid(True)
     plt.legend()
     
     # Wykres dokładności
     plt.subplot(1, 2, 2)
-    plt.plot(range(1, n_epochs + 1), train_acc, label="Dokładność treningowa")
-    plt.plot(range(1, n_epochs + 1), test_acc, label="Dokładność testowa")
-    plt.xlabel("Epoka")
-    plt.ylabel("Dokładność")
+    for metric_name in epochs_metrics:
+        if 'acc' in metric_name:
+            plt.plot(
+                range(1, config.n_epochs + 1),
+                epochs_metrics[metric_name],
+                label=metric_name
+            )
+    plt.xlabel("Epoch")
+    plt.ylabel("Acc")
+    plt.grid(True)
     plt.legend()
     
     # Zapisywanie wykresu do folderu 'results'
     if not os.path.exists("results"):
         os.makedirs("results")
-    plt.savefig(os.path.join("results", f"metrics_{config.postfix_title}.pdf"), bbox_inches='tight')
+        
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    plt.savefig(
+        os.path.join("results", f"metrics_{config.postfix_title}_{timestamp}.pdf"),
+        bbox_inches='tight'
+    )
     
+    
+def log_to_console(epochs_metrics):
+    last_vals = {
+        key: vals[-1] if len(vals) > 0 else 0.0
+        for key, vals in epochs_metrics.items()
+        if key != 'epoch'
+    }
+
+    parts = [
+        f"{key}: {last_vals[key]:.4f}"
+        for key in sorted(last_vals)
+    ]
+    metrics_str = ", ".join(parts)
+    logging.info(f"Epoka {epochs_metrics['epoch']}: {metrics_str}")

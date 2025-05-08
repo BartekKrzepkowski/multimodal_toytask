@@ -1,0 +1,1 @@
+- Konkatenacja obrazu z szumem obniża accuracy na zadaniu
