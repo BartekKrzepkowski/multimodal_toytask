@@ -36,7 +36,7 @@ def show_and_save_grid(dataset, num_images=16, cols=4, save_path="dataset_grid.p
     
     
     
-def matplotlib_scatters_training(config, epochs_metrics):
+def matplotlib_scatters_training(epochs_metrics, save_path):
     # Tworzenie wykresu metryk: strata i dokładność
     plt.figure(figsize=(10, 4))
     
@@ -45,7 +45,7 @@ def matplotlib_scatters_training(config, epochs_metrics):
     for metric_name in epochs_metrics:
         if 'loss' in metric_name:
             plt.plot(
-                range(1, config.n_epochs + 1),
+                range(len(epochs_metrics[metric_name])),
                 epochs_metrics[metric_name],
                 label=metric_name
             )
@@ -59,7 +59,7 @@ def matplotlib_scatters_training(config, epochs_metrics):
     for metric_name in epochs_metrics:
         if 'acc' in metric_name:
             plt.plot(
-                range(1, config.n_epochs + 1),
+                range(len(epochs_metrics[metric_name])),
                 epochs_metrics[metric_name],
                 label=metric_name
             )
@@ -67,16 +67,13 @@ def matplotlib_scatters_training(config, epochs_metrics):
     plt.ylabel("Acc")
     plt.grid(True)
     plt.legend()
-    
-    # Zapisywanie wykresu do folderu 'results'
-    if not os.path.exists("results"):
-        os.makedirs("results")
         
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     plt.savefig(
-        os.path.join("results", f"metrics_{config.postfix_title}_{timestamp}.pdf"),
+        save_path,
+        # os.path.join("results", f"metrics_{config.postfix_title}_{timestamp}.pdf"),
         bbox_inches='tight'
     )
+    # ZMNIEJSZ LEGENDĘ
     
     
 def log_to_console(epochs_metrics):
@@ -91,4 +88,4 @@ def log_to_console(epochs_metrics):
         for key in sorted(last_vals)
     ]
     metrics_str = ", ".join(parts)
-    logging.info(f"Epoka {epochs_metrics['epoch']}: {metrics_str}")
+    logging.info(f"Epoch {epochs_metrics['epoch']}: {metrics_str}")

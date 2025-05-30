@@ -1,3 +1,4 @@
+import logging
 import pickle
 import random
 import os
@@ -134,18 +135,19 @@ class CIFAR10PrepairedConcatenatedDataset(Dataset):
     
 # JTT DataLoader (z wagami)
 class WeightedDataset(torch.utils.data.Dataset):
-    def __init__(self, original_dataset, failure_indices, weight=3):
+    def __init__(self, original_dataset, failure_indices, weight=20):
+        logging.info(f"Using weight {weight} for {len(failure_indices)} failure indices.")
         self.dataset = original_dataset
         self.failure_indices = failure_indices
-        self.weight = weight  # np. 3x większa waga dla błędów
+        self.weight = weight
 
     def __len__(self):
         return len(self.dataset)
 
     def __getitem__(self, idx):
-        img, label = self.dataset[idx]
+        img, label, is_corrupted = self.dataset[idx]
         sample_weight = self.weight if idx in self.failure_indices else 1
-        return img, label, sample_weight
+        return img, label, [is_corrupted[0], sample_weight] # ponieważ is_corrupted to lista długości 1
 
 
 class PairedSameClassDatasetWithOOD(Dataset):
@@ -278,11 +280,11 @@ class ConcatNoisyDataset(Dataset):
         dataset1: Dataset,
         dataset2: Dataset,
         phase: str = 'train',
-        blur_prob: float = 0.5,
+        blur_prob: float = 0.5,   # prawdopodobieństwo rozmycia drugiego obrazu
         indices_file: str = None,
         seed: int = 42,
-        blur_opposite: bool = False,
-        is_blur: bool = True
+        blur_opposite: bool = False,    # czy rozmywać obraz przeciwny
+        is_blur: bool = True    # czy używać rozmycia (True) czy szumu (False)
     ):
         """
         Łączy obrazy tej samej klasy z dwóch datasetów.
@@ -291,6 +293,7 @@ class ConcatNoisyDataset(Dataset):
         """
         self.dataset1 = dataset1
         self.dataset2 = dataset2
+        self.targets = dataset1.targets
         self.blur_prob = blur_prob
         self.indices_file = indices_file
         self.is_train = (phase == 'train')
@@ -321,9 +324,11 @@ class ConcatNoisyDataset(Dataset):
 
         # 2) Jeśli istnieje plik z parami → wczytaj je
         if os.path.exists(indices_file):
+            logging.info(f"Wczytano pary z {indices_file}")
             with open(indices_file, 'rb') as f:
                 self.paired_indices = pickle.load(f)
         else:
+            logging.info(f"Nie znaleziono pliku {indices_file}. Tworzenie nowych par...")
             # 3) Zbuduj mapę klasy → indeksy w dataset2
             class_to_idxs1 = defaultdict(list)
             class_to_idxs2 = defaultdict(list)
@@ -359,6 +364,7 @@ class ConcatNoisyDataset(Dataset):
 
             # 5) Zapisz pary na dysku, jeśli podano ścieżkę
             if indices_file:
+                logging.info(f"Zapisano pary do {indices_file}")
                 os.makedirs(os.path.dirname(indices_file), exist_ok=True)
                 with open(indices_file, 'wb') as f:
                     pickle.dump(self.paired_indices, f)
@@ -386,4 +392,4 @@ class ConcatNoisyDataset(Dataset):
             np.hstack((np.array(img_left), np.array(img_right)))
         )
         concatenated_img = self.full_transform(concatenated_img)
-        return concatenated_img, label
+        return concatenated_img, label, [pair_info['apply_noise']]

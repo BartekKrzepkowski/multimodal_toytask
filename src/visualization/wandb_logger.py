@@ -4,20 +4,20 @@ import wandb
 
 
 class WandbLogger:
-    def __init__(self, config):
-        self.project = config.logger_config['project_name']
+    def __init__(self, logger_params, exp_name):
+        self.project = logger_params['project_name']
         self.writer = wandb
         self.writer.login(key=os.environ['WANDB_API_KEY'])
-        if not os.path.isdir(config.logger_config['log_dir']):
-            os.makedirs(config.logger_config['log_dir'])
+        if not os.path.isdir(logger_params['log_dir']):
+            os.makedirs(logger_params['log_dir'])
         self.writer.init(
-            entity=config.logger_config['entity'],
-            project=config.logger_config['project_name'],
-            name=config.exp_name,
+            entity=logger_params['entity'],
+            project=logger_params['project_name'],
+            name=exp_name,
             # config=dict(config),
             # config=OmegaConf.to_container(config, resolve=True),  # czy nie wystarczy dict(config)?
-            dir=config.logger_config['log_dir'],
-            mode=config.logger_config['mode']
+            dir=logger_params['log_dir'],
+            mode=logger_params['mode']
         )
 
     def close(self):

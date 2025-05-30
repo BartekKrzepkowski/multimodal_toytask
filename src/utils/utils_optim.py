@@ -1,5 +1,6 @@
 import torch
 
+from src.utils.mapping_new import SCHEDULER_NAME_MAP
 
 FORBIDDEN_LAYER_TYPES = [torch.nn.Embedding, torch.nn.LayerNorm, torch.nn.BatchNorm1d, torch.nn.BatchNorm2d]
 
@@ -41,8 +42,8 @@ def configure_optimizer(optim_wrapper, model, optim_kwargs):
 
 
 # Funkcja przygotowująca optymalizator
-def prepare_optim_and_scheduler(model, optim_name, optim_params, scheduler_name=None, scheduler_params=None):
-    optim_wrapper = torch.optim.SGD  #OPTIMIZER_NAME_MAP[optim_name]
-    optim = configure_optimizer(optim_wrapper, model, optim_params)
-    lr_scheduler = SCHEDULER_NAME_MAP[scheduler_name](optim, **scheduler_params) if scheduler_name is not None else None
+def prepare_optim_and_scheduler(model, optim_scheduler_params):
+    optim_wrapper = torch.optim.SGD  #OPTIMIZER_NAME_MAP[optim_scheduler_params['optim_name']]
+    optim = configure_optimizer(optim_wrapper, model, optim_scheduler_params['optim_params'])
+    lr_scheduler = SCHEDULER_NAME_MAP[optim_scheduler_params['scheduler_name']](optim, **optim_scheduler_params['scheduler_params']) if optim_scheduler_params['scheduler_name'] is not None else None
     return optim, lr_scheduler

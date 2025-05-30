@@ -6,7 +6,7 @@
 #SBATCH --mem-per-cpu=1G
 #SBATCH --partition=plgrid-gpu-a100
 #SBATCH --account=plgdnnp2-gpu-a100
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=slurm_logs/slurm-%j.out
 
 eval "$(conda shell.bash hook)"

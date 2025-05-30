@@ -25,10 +25,10 @@ def prepare_resnet(model_params):
     return ResNet18(**model_params)
 
 
-def prepare_model(model_name, model_params, model_path=None, init=None):
-    model = prepare_resnet(model_params) # MODEL_NAME_MAP[model_name](**model_params)
-    if model_path is not None:
-        model = load_model(model, model_path)
+def prepare_model(model_params, init=None):
+    model = prepare_resnet(model_params['model_params']) # MODEL_NAME_MAP[model_name](**model_params)
+    if model_params['model_path'] is not None:
+        model = load_model(model, model_params['model_path'])
     else:
         model.apply(default_init)
     return model
